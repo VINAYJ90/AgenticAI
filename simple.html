@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Google Map Click Coordinates</title>
+  <meta charset="utf-8" />
+  <style>
+    #map {
+      height: 90vh;
+      width: 100%;
+    }
+    #coords {
+      padding: 10px;
+      font-family: Arial;
+    }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+  <div id="coords">Click on the map to get coordinates.</div>
+
+  <script>
+    function initMap() {
+      const map = new google.maps.Map(document.getElementById("map"), {
+        zoom: 13,
+        center: { lat: 12.9716, lng: 77.5946 }, // Bengaluru
+      });
+
+      map.addListener("click", function (e) {
+        const lat = e.latLng.lat().toFixed(6);
+        const lng = e.latLng.lng().toFixed(6);
+        document.getElementById("coords").innerText = `Lat: ${lat}, Lng: ${lng}`;
+      });
+    }
+  </script>
+
+  <!-- Replace YOUR_API_KEY with your actual Google Maps API key -->
+  <script async defer
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD0xpclQoMTs9FgXsyk1zvXYdiFfJb8YXM&callback=initMap">
+  </script>
+</body>
+</html>

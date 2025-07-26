@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bangalore City Ratings</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            height: calc(100vh - 40px);
+            display: grid;
+            grid-template-columns: 400px 1fr;
+            grid-template-rows: auto 1fr auto;
+            gap: 20px;
+        }
+
+        .header {
+            grid-column: 1 / -1;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            color: white;
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .profile-section {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 10px 20px;
+            border-radius: 25px;
+            backdrop-filter: blur(10px);
+        }
+
+        .profile-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+
+        .profile-info {
+            color: white;
+        }
+
+        .profile-name {
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+
+        .profile-location {
+            font-size: 12px;
+            opacity: 0.8;
+        }
+
+        .ratings-panel {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            overflow-y: auto;
+            backdrop-filter: blur(10px);
+        }
+
+        .map-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            position: relative;
+        }
+
+        .map-placeholder {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, #f0f2f5, #e8ecf0);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #666;
+            font-size: 18px;
+        }
+
+        .map-icon {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+
+        .parameters-bar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .parameter-chip {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 500;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .ratings-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .rating-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .rating-item:last-child {
+            border-bottom: none;
+        }
+
+        .rating-label {
+            font-weight: 500;
+            color: #555;
+        }
+
+        .stars {
+            display: flex;
+            gap: 2px;
+        }
+
+        .star {
+            color: #ffd700;
+            font-size: 16px;
+        }
+
+        .star.empty {
+            color: #ddd;
+        }
+
+        .click-more {
+            color: #667eea;
+            cursor: pointer;
+            text-decoration: underline;
+            font-size: 14px;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+
+        .click-more:hover {
+            color: #764ba2;
+        }
+
+        .dropdown-content {
+            margin-left: 20px;
+            margin-top: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+            border-left: 3px solid #667eea;
+        }
+
+        .settings-section {
+            grid-column: 1 / -1;
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .settings-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 25px;
+            cursor: pointer;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .settings-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .action-buttons {
+            margin-top: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .action-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background 0.3s ease;
+        }
+
+        .action-btn:hover {
+            background: #764ba2;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto auto 1fr auto;
+            }
+            
+            .ratings-panel {
+                order: 2;
+            }
+            
+            .map-container {
+                order: 1;
+                min-height: 300px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">🏙️ Bangalore Explorer</div>
+            <div class="profile-section">
+                <div class="profile-avatar">JD</div>
+                <div class="profile-info">
+                    <div class="profile-name">Parag Dhingra</div>
+                    <div class="profile-location">Bangalore, Karnataka</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="ratings-panel">
+            <div class="parameters-bar">
+                <div class="parameter-chip">Road</div>
+                <div class="parameter-chip">Rent</div>
+                <div class="parameter-chip">Food</div>
+                <div class="parameter-chip">Travel</div>
+            </div>
+
+            <div class="ratings-title">Ratings:</div>
+            
+            <div class="rating-item">
+                <div class="rating-label">
+                    <span class="click-more" onclick="toggleDropdown('first')">Click more details..</span>
+                </div>
+                <div class="stars">
+                    <span class="star">★</span>
+                    <span class="star">★</span>
+                    <span class="star">★</span>
+                    <span class="star">★</span>
+                    <span class="star empty">★</span>
+                </div>
+            </div>
+
+            <div id="first-dropdown" class="dropdown-content hidden">
+                <div class="rating-item">
+                    <div class="rating-label">Cost of living</div>
+                    <div class="stars">
+                        <span class="star">★</span>
+                        <span class="star">★</span>
+                        <span class="star">★</span>
+                        <span class="star">★</span>
+                        <span class="star">★</span>
+                    </div>
+                </div>
+                <div class="rating-item">
+                    <div class="rating-label">Safety</div>
+                    <div class="stars">
+                        <span class="star">★</span>
+                        <span class="star">★</span>
+                        <span class="star">★</span>
+                        <span class="star">★</span>
+                        <span class="star empty">★</span>
+                    </div>
+                </div>
+                <div class="rating-item">
+                    <div class="rating-label">Connectivity</div>
+                    <div class="stars">
+                        <span class="star">★</span>
+                        <span class="star">★</span>
+                        <span class="star">★</span>
+                        <span class="star empty">★</span>
+                        <span class="star empty">★</span>
+                    </div>
+                </div>
+                <div class="rating-item">
+                    <div class="rating-label">Health</div>
+                    <div class="stars">
+                        <span class="star">★</span>
+                        <span class="star">★</span>
+                        <span class="star">★</span>
+                        <span class="star">★</span>
+                        <span class="star empty">★</span>
+                    </div>
+                </div>
+                <div class="rating-item">
+                    <div class="rating-label">Social Life</div>
+                    <div class="stars">
+                        <span class="star">★</span>
+                        <span class="star">★</span>
+                        <span class="star empty">★</span>
+                        <span class="star empty">★</span>
+                        <span class="star empty">★</span>
+                    </div>
+                </div>
+                <div class="rating-item">
+                    <div class="rating-label">
+                        <span class="click-more" onclick="toggleDropdown('second')">Click more details..</span>
+                    </div>
+                </div>
+            </div>
+
+            <div id="second-dropdown" class="dropdown-content hidden">
+                <div class="rating-item">
+                    <div class="rating-label">Education</div>
+                    <div class="stars">
+                        <span class="star">★</span>
+                        <span class="star">★</span>
+                        <span class="star">★</span>
+                        <span class="star">★</span>
+                        <span class="star empty">★</span>
+                    </div>
+                </div>
+                <div class="rating-item">
+                    <div class="rating-label">Environment</div>
+                    <div class="stars">
+                        <span class="star">★</span>
+                        <span class="star">★</span>
+                        <span class="star">★</span>
+                        <span class="star empty">★</span>
+                        <span class="star empty">★</span>
+                    </div>
+                </div>
+                <div class="rating-item">
+                    <div class="rating-label">Community</div>
+                    <div class="stars">
+                        <span class="star">★</span>
+                        <span class="star">★</span>
+                        <span class="star">★</span>
+                        <span class="star">★</span>
+                        <span class="star empty">★</span>
+                    </div>
+                </div>
+                <div class="rating-item">
+                    <div class="rating-label">Employment</div>
+                    <div class="stars">
+                        <span class="star">★</span>
+                        <span class="star">★</span>
+                        <span class="star">★</span>
+                        <span class="star">★</span>
+                        <span class="star empty">★</span>
+                    </div>
+                </div>
+                <div class="rating-item">
+                    <div class="rating-label">Infrastructure</div>
+                    <div class="stars">
+                        <span class="star">★</span>
+                        <span class="star">★</span>
+                        <span class="star empty">★</span>
+                        <span class="star empty">★</span>
+                        <span class="star empty">★</span>
+                    </div>
+                </div>
+                <div class="rating-item">
+                    <div class="rating-label">
+                        <span class="click-more" onclick="toggleDropdown('third')">Click more details..</span>
+                    </div>
+                </div>
+            </div>
+
+            <div id="third-dropdown" class="dropdown-content hidden">
+                <div class="action-buttons">
+                    <button class="action-btn">Ask Anything about Area</button>
+                    <button class="action-btn">Report Issue in Area</button>
+                    <button class="action-btn">Support Area</button>
+                </div>
+                <div class="rating-item">
+                    <div class="rating-label">
+                        <span class="click-more" onclick="toggleDropdown('fourth')">Click more details..</span>
+                    </div>
+                </div>
+            </div>
+
+            <div id="fourth-dropdown" class="dropdown-content hidden">
+                <p style="color: #666; text-align: center; padding: 20px;">
+                    Additional features and options will be displayed here.
+                </p>
+            </div>
+        </div>
+
+        <div class="map-container">
+            <div class="map-placeholder">
+                <div class="map-icon">🗺️</div>
+                <div>Bangalore City Map</div>
+                <div style="font-size: 14px; opacity: 0.7; margin-top: 10px;">
+                    Google Maps API integration placeholder
+                </div>
+                <div style="font-size: 12px; opacity: 0.5; margin-top: 20px; text-align: center; max-width: 300px;">
+                    To integrate real Google Maps, you'll need to add the Google Maps JavaScript API with your API key
+                </div>
+            </div>
+        </div>
+
+        <div class="settings-section">
+            <button class="settings-btn" onclick="openSettings()">⚙️ Settings</button>
+        </div>
+    </div>
+
+    <script>
+        let currentDropdown = null;
+
+        function toggleDropdown(dropdownName) {
+            const dropdown = document.getElementById(dropdownName + '-dropdown');
+            
+            // If clicking the same dropdown, toggle it
+            if (currentDropdown === dropdownName) {
+                dropdown.classList.toggle('hidden');
+                if (dropdown.classList.contains('hidden')) {
+                    currentDropdown = null;
+                }
+                return;
+            }
+            
+            // Hide all dropdowns first
+            const allDropdowns = document.querySelectorAll('.dropdown-content');
+            allDropdowns.forEach(d => d.classList.add('hidden'));
+            
+            // Show the clicked dropdown
+            dropdown.classList.remove('hidden');
+            currentDropdown = dropdownName;
+            
+            // Scroll to the dropdown
+            dropdown.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        function openSettings() {
+            alert('Settings panel would open here. This could be a modal or redirect to a settings page.');
+        }
+
+        // Add some interactive hover effects
+        document.querySelectorAll('.parameter-chip').forEach(chip => {
+            chip.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-2px)';
+                this.style.boxShadow = '0 4px 15px rgba(0, 0, 0, 0.2)';
+            });
+            
+            chip.addEventListener('mouseleave', function() {
+                this.style.transform = 'translateY(0)';
+                this.style.boxShadow = '0 2px 10px rgba(0, 0, 0, 0.1)';
+            });
+        });
+
+        // Add click effects to stars
+        document.querySelectorAll('.star').forEach(star => {
+            star.addEventListener('click', function() {
+                this.style.transform = 'scale(1.2)';
+                setTimeout(() => {
+                    this.style.transform = 'scale(1)';
+                }, 150);
+            });
+        });
+    </script>
+</body>
+</html>
