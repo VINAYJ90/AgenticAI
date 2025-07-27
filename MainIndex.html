@@ -437,7 +437,50 @@
                     To integrate real Google Maps, you'll need to add the Google Maps JavaScript API with your API key
                 </div>
             </div>
-        </div>
+    <div style="display: flex; height: 100vh;">
+      <div style="flex: 1;">
+        <div class="map-container">
+            <div class="map-placeholder">
+                <div class="map-icon">🗺️</div>
+                <div>Bangalore City Map</div>
+                <div style="font-size: 14px; opacity: 0.7; margin-top: 10px;">
+                    Google Maps API integration placeholder
+                </div>
+                <div style="font-size: 12px; opacity: 0.5; margin-top: 20px; text-align: center; max-width: 300px;">
+                    To integrate real Google Maps, you'll need to add the Google Maps JavaScript API with your API key
+                </div>
+            </div>
+      </div>
+      <div id="chat-sidebar">
+        <div id="chat-header">Chat</div>
+        <div id="chat-messages"></div>
+        <form id="chat-form">
+          <input type="text" id="chat-input" placeholder="Type a message..." autocomplete="off" />
+          <button type="submit">Send</button>
+        </form>
+      </div>
+    </div>
+    <script>
+      const chatForm = document.getElementById('chat-form');
+      const chatInput = document.getElementById('chat-input');
+      const chatMessages = document.getElementById('chat-messages');
+      chatForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const userMsg = chatInput.value.trim();
+        if (userMsg) {
+          addMessage('You', userMsg);
+          setTimeout(() => addMessage('Bot', userMsg), 400);
+          chatInput.value = '';
+        }
+      });
+      function addMessage(sender, text) {
+        const msgDiv = document.createElement('div');
+        msgDiv.className = sender === 'You' ? 'chat-user' : 'chat-bot';
+        msgDiv.innerHTML = `<strong>${sender}:</strong> ${text}`;
+        chatMessages.appendChild(msgDiv);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+      }
+    </script>
 
         <div class="settings-section">
             <button class="settings-btn" onclick="openSettings()">⚙️ Settings</button>

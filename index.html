@@ -3,19 +3,117 @@
 <head>
   <title>Click Map to Send Coordinates</title>
   <meta charset="utf-8">
-  <link rel="stylesheet" href="style.css">
+  <!-- <link rel="stylesheet" href="/style.css"> -->
   <style>
     #map { height: 90vh; width: 100%; }
     #result { padding: 10px; font-family: Arial; }
     .error { color: red; }
     .success { color: green; }
+
+    /* Zig-zag chat styles */
+    .chat-row {
+      display: flex;
+      align-items: flex-end;
+      margin-bottom: 12px;
+    }
+    .user-row {
+      flex-direction: row-reverse;
+      justify-content: flex-end;
+      width: 100%;
+    }
+    /* Ensure user avatar is 2cm away from bubble */
+    .user-row.chat-avatar {
+      margin-left: 100px;
+    }
+    .bot-row {
+      flex-direction: row;
+      justify-content: flex-start;
+      width: 100%;
+    }
+    .chat-avatar {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      margin: 0 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+    .chat-bubble {
+      max-width: 60%;
+      padding: 12px 18px;
+      border-radius: 18px;
+      font-size: 15px;
+      position: relative;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      margin-bottom: 2px;
+      word-break: break-word;
+      display: inline-block;
+    }
+    .user-bubble {
+      background: #7ed6df;
+      color: #222;
+      border-bottom-right-radius: 4px;
+      align-self: flex-end;
+      margin-left: auto;
+      text-align: right;
+    }
+    .bot-bubble {
+      background: #dff9fb;
+      color: #222;
+      border-bottom-left-radius: 4px;
+      align-self: flex-start;
+      margin-right: auto;
+      text-align: left;
+    }
+    .chat-time {
+      font-size: 12px;
+      color: #aaa;
+      margin: 0 8px;
+      align-self: flex-end;
+    }
+    /* Golden and bold stars for scores */
+    .stars {
+      color: #FFD700;
+      font-weight: bold;
+      font-size: 20px;
+      letter-spacing: 2px;
+      vertical-align: middle;
+    }
   </style>
 </head>
 <body>
-  <div id="map"></div>
-  <div id="result">Click on the map to send coordinates to Python.</div>
+  <div class="map-container">
+    <div id="map"></div>
+    <div id="result">Click on the map to send coordinates to Python.</div>
+  </div>
+  <!--chat container starts-->
+
+<div class="chat-container" id="chatContainer" style="width: 350px; height: 100vh; background: white; border-left: 1px solid #e5e7eb; display: flex; flex-direction: column; box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1); position: fixed; right: 0; top: 0; z-index: 1000; transition: transform 0.3s ease;">
+    <div class="chat-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; text-align: center; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); position: relative;">
+      <h2 style="font-size: 18px; font-weight: 600; margin: 0;">💬 Chat Assistant</h2>
+      <button id="minimizeBtn" style="position: absolute; top: 15px; right: 15px; background: rgba(255, 255, 255, 0.2); border: none; color: white; width: 30px; height: 30px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: bold; transition: all 0.3s ease;">×</button>
+    </div>
+    
+    <div class="chat-messages" id="chatMessages" style="flex: 1; padding: 20px; overflow-y: auto; background: #fafafa; display: flex; flex-direction: column; gap: 12px;">
+      <div style="text-align: center; color: #6b7280; font-size: 13px; padding: 16px; background: white; border-radius: 12px; border: 1px dashed #d1d5db;">👋 Type "Hi" to start chatting</div>
+    </div>
+    
+    <div class="chat-input-container" style="padding: 20px; background: white; border-top: 1px solid #e5e7eb; display: flex; gap: 10px; align-items: center;">
+      <input type="text" id="chatInput" class="chat-input" placeholder="Type message..." style="flex: 1; padding: 12px 16px; border: 2px solid #e5e7eb; border-radius: 25px; font-size: 14px; outline: none; transition: all 0.3s ease; background: #f9fafb;">
+      <button id="sendButton" class="send-button" style="padding: 12px 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; border-radius: 25px; color: white; cursor: pointer; font-size: 14px; font-weight: 600; transition: all 0.3s ease; min-width: 70px;">Send</button>
+    </div>
+</div>
+
+<!-- Floating Chat Button (appears when minimized) -->
+<button id="chatToggleBtn" style="display: none; position: fixed; bottom: 30px; right: 30px; width: 60px; height: 60px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; border-radius: 50%; color: white; cursor: pointer; font-size: 24px; box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4); z-index: 1001; transition: all 0.3s ease;">💬</button>
+
+  <!--chat container ends-->
 
   <script>
+
+    const API_KEY = "{{ google_maps_api_key }}";
+    const FLASK_URL = "{{ flask_url }}";
+
+    
     function initMap() {
       const map = new google.maps.Map(document.getElementById("map"), {
         zoom: 13,
@@ -49,14 +147,17 @@
           resultDiv.innerHTML = `<span class="success">${data.message}</span>`;
 
           let scoresHtml = '<h3>Location Scores:</h3>';
-            if (data.scores) {
+            if (data.scores && data.names) {
                 for (const [key, value] of Object.entries(data.scores)) {
                 const stars = '★'.repeat(Math.max(0, Math.min(5, value))); // Limit to 5 stars
                 const emptyStars = '☆'.repeat(5 - Math.max(0, Math.min(5, value)));
-                scoresHtml += `<div class="score-item">
-                    <span class="score-label">${key}:</span> 
-                    <span class="stars">${stars}${emptyStars}</span> 
-                    <span class="score-value">(${value})</span>
+                // Show name of highest-rated place for this parameter
+                const sourceName = data.names[key] || '';
+                scoresHtml += `<div class="score-item" style="display:flex;align-items:center;gap:4px;margin-bottom:8px;">
+                    <span class="score-label" style="min-width:120px;font-size:16px;font-weight:500;color:#222;">${key}:</span>
+                    <span class="stars">${stars}${emptyStars}</span>
+                    <span class="score-value" style="font-size:16px;font-weight:500;color:#222;margin-left:4px;">(${value})</span>
+                    <span class="score-source" style="color:#764ba2;font-weight:600;margin-left:8px;">${sourceName}</span>
                 </div>`;
                 }
             } 
@@ -69,11 +170,113 @@
         }
       });
     }
+
+    function addMessage(message, isUser = false) {
+      const chatMessages = document.getElementById('chatMessages');
+      const msgWrapper = document.createElement('div');
+      msgWrapper.className = isUser ? 'chat-row user-row' : 'chat-row bot-row';
+
+      // Avatar
+      const avatar = document.createElement('img');
+      avatar.className = 'chat-avatar';
+      avatar.src = isUser
+        ? 'https://cdn-icons-png.flaticon.com/512/4140/4140048.png' // user avatar
+        : 'https://cdn-icons-png.flaticon.com/512/4712/4712027.png'; // bot avatar (robot)
+      avatar.alt = isUser ? 'You' : 'Bot';
+
+      // Message bubble
+      const bubble = document.createElement('div');
+      bubble.className = isUser ? 'chat-bubble user-bubble' : 'chat-bubble bot-bubble';
+      bubble.textContent = message;
+
+      // Timestamp
+      const time = document.createElement('div');
+      time.className = 'chat-time';
+      const now = new Date();
+      time.textContent = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+      // Layout zig-zag
+      if (isUser) {
+        msgWrapper.appendChild(bubble);
+        msgWrapper.appendChild(avatar);
+        msgWrapper.appendChild(time);
+      } else {
+        // Bot: avatar then bubble then time
+        msgWrapper.appendChild(avatar);
+        msgWrapper.appendChild(bubble);
+        msgWrapper.appendChild(time);
+      }
+
+      chatMessages.appendChild(msgWrapper);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    async function sendMessage() {
+      const input = document.getElementById('chatInput');
+      const message = input.value.trim();
+      if (!message){
+        return message
+      };
+
+      addMessage(message, true);
+      input.value = '';
+      
+    // Show typing indicator
+    const typingDiv = document.createElement('div');
+    typingDiv.id = 'typing-indicator';
+    typingDiv.style.cssText = "margin-bottom: 12px; text-align: left;";
+    typingDiv.innerHTML = `<div style="display: inline-block; max-width: 80%; padding: 12px 16px; border-radius: 18px; font-size: 14px; background: white; color: #666; border: 1px solid #e5e7eb; border-bottom-left-radius: 6px;">Typing...</div>`;
+    document.getElementById('chatMessages').appendChild(typingDiv);
+    document.getElementById('chatMessages').scrollTop = document.getElementById('chatMessages').scrollHeight;
+
+    try {
+        // Send message to Flask
+        const response = await fetch("http://localhost:5000/chat", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ message: message }),
+        });
+
+        const data = await response.json();
+        
+        // Remove typing indicator
+        const typingIndicator = document.getElementById('typing-indicator');
+        if (typingIndicator) {
+        typingIndicator.remove();
+        }
+
+        // Add bot response
+        if (data.response) {
+        addMessage(data.response, false);
+        } else if (data.error) {
+        addMessage(`Error: ${data.error}`, false);
+        } else {
+        addMessage("Sorry, I didn't understand that.", false);
+        }
+
+    } catch (error) {
+        // Remove typing indicator
+        const typingIndicator = document.getElementById('typing-indicator');
+        if (typingIndicator) {
+        typingIndicator.remove();
+        }
+        
+        console.error('Chat error:', error);
+        addMessage("Sorry, I'm having trouble connecting. Please try again.", false);
+    }
+    }
+
+    document.getElementById('sendButton').addEventListener('click', sendMessage);
+    document.getElementById('chatInput').addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') sendMessage();
+    });
   </script>
 
   <!-- Replace YOUR_API_KEY with your actual Google Maps API key -->
   <script async defer
-    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD0xpclQoMTs9FgXsyk1zvXYdiFfJb8YXM&callback=initMap">
+    src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_api_key }}&callback=initMap">
   </script>
 </body>
 </html>
