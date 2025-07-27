@@ -24,7 +24,7 @@ CORS(app)
 
 # Global variable to store current location (simple approach)
 current_location = {'lat': None, 'lng': None}
-chat_history = {'chat_history': ''}
+# chat_history = {'chat_history': ''}
 
 
 @app.route('/')
@@ -49,7 +49,7 @@ def health_check():
 @app.route("/chat", methods=["POST"])
 def chat():
 
-    global current_location, chat_history
+    # global current_location, chat_history
 
     try:
         data = request.get_json()
@@ -79,8 +79,8 @@ def chat():
             return jsonify({"error": "No JSON data received"}), 400
         
         message = data.get("message")
-        chat_history = chat_history + \
-            "message: "+ message + '\n'
+        # chat_history = str(chat_history['chat_history']) + \
+            # "message: "+ message + '\n'
         
         if not message:
             return jsonify({"error": "No message provided"}), 400
@@ -135,7 +135,7 @@ def chat():
                     print('context`: ', context)
 
         #           agent 2, generate answer from google maps results 
-                    response_final = utils.respond_to_maps_output(client, message, context, chat_history)
+                    response_final = utils.respond_to_maps_output(client, message, context)
 
                     # LLM Answer
                     response_text = response_final
@@ -143,8 +143,8 @@ def chat():
                 else:
                     response_text = response0
 
-        chat_history = chat_history + \
-            "response: "+ response_text + '\n'
+        # chat_history = str(chat_history['chat_history']) + \
+            # "response: "+ response_text + '\n'
 
 
         return jsonify({

@@ -193,7 +193,7 @@ def get_rental_availability(q_latitude, q_longitude):
         if wt_distance <= 20:
             return [1, top_place, top_rating]
     else :
-        return 2
+        return [2, top_place, top_rating]
     
 
 def get_safety(q_latitude, q_longitude):
@@ -459,7 +459,7 @@ def get_education(q_latitude, q_longitude):
 
             if place_counter >= 10:
                 break
-            
+
             print(distance_sum, place_counter)
 
 
@@ -782,13 +782,13 @@ def get_all_scores(q_latitude, q_longitude):
     scores['Rental Availability'] = get_rental_availability(q_latitude, q_longitude)
     scores['Safety'] = get_safety(q_latitude, q_longitude)
     scores['Connectivity'] = get_connectivity( q_latitude, q_longitude)
-    scores['Health'] = 5  # Assuming health is always good
+    # scores['Health'] = 5  # Assuming health is always good
     scores['Entertainment'] = get_entertainment( q_latitude, q_longitude)
     scores['Education'] = get_education( q_latitude, q_longitude)
-    scores['Environment'] = get_environment( q_latitude, q_longitude)
-    scores['Community and Culture'] = get_community( q_latitude, q_longitude)
-    scores['Digital & Civic Infrastructure'] = get_d_c_infra( q_latitude, q_longitude)
-    scores['Employment Opportunities'] = get_employment(q_latitude, q_longitude)
+    # scores['Environment'] = get_environment( q_latitude, q_longitude)
+    # scores['Community and Culture'] = get_community( q_latitude, q_longitude)
+    # scores['Digital & Civic Infrastructure'] = get_d_c_infra( q_latitude, q_longitude)
+    # scores['Employment Opportunities'] = get_employment(q_latitude, q_longitude)
 
 
 
@@ -813,7 +813,8 @@ def ask_google_maps_or_not(client, message):
     response = client.models.generate_content(
         model="gemini-2.5-flash",
         contents="If the message needs information of something, respond with Yes, else start with No. \n Response should stictly start with Yes or No. " \
-            + "If response starts with no, respond as expected. Keep the response concise. \n Message: " + message 
+            + "If response starts with no, give explanation and try to help. Keep the response concise. " \
+            + "Be supportive and generally answer with a Yes. \n Message: " + message 
     )
 
     return response.text
@@ -831,10 +832,10 @@ def rephrase_ques_for_maps(client, message):
     return response.text
 
 
-def respond_to_maps_output(client, message, context, chat_history):
+def respond_to_maps_output(client, message, context):
 
-    print('chat_history:')
-    print(str(chat_history)[:100])
+    # print('chat_history:')
+    # print(str(chat_history)[:100])
 
     response = client.models.generate_content(
         model="gemini-2.5-flash",
@@ -843,7 +844,7 @@ def respond_to_maps_output(client, message, context, chat_history):
                + " Keep the response concise."\
                + " Provide 2 options if possible."\
                + " Context: "+ context \
-               + " chat history: " + str(chat_history) \
+            #    + " chat history: " + str(chat_history['chat_history']) \
                + " Question: "+ message 
     )
 
@@ -861,8 +862,12 @@ def formalize_context(places):
                           + 'Type: ' + str(place.get('type', '')) \
                           + 'Price Level: ' + str(place.get('price_level', '')) \
                           + 'Over all rating: ' + str(place.get('rating', '')) \
-                          + '# of ratings: ' + str(place.get('user_ratings_total', '')) + '. \n'
+                          + '# of ratings: ' + str(place.get('user_ratings_total', '')) \
+                          + 'Address: ' + str(place.get('address', ''))+ '. \n'
         
         iter = iter + 1
+
+        if iter >= 5:
+            break
 
     return context
